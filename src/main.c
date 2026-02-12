@@ -1,87 +1,106 @@
-#include "src/minishell.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/12 15:14:12 by wedu              #+#    #+#             */
+/*   Updated: 2026/02/12 17:36:18 by wedu             ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-extern int	g_status;
+#include "minishell.h"
 
-static void	mini_getpid(t_prompt *p)
+static void	init_shell(t_shell *shell, char **envp)
 {
-	pid_t	pid;
-
-	pid = fork();
-	if (pid < 0)
-	{
-		mini_perror(FORKERR, NULL, 1);
-		ft_free_matrix(&p->envp);
-		exit(1);
-	}
-	if (!pid)
-	{
-		ft_free_matrix(&p->envp);
-		exit(1);
-	}
-	waitpid(pid, NULL, 0);
-	p->pid = pid - 1;
+	shell->env = init_env(envp);
+	shell->commands = NULL;
+	shell->envp = envp;
+	shell->exit_status = 0;
+	shell->stdin_backup = dup(STDIN_FILENO);
+	shell->stdout_backup = dup(STDOUT_FILENO);
 }
 
-static t_prompt	init_vars(t_prompt prompt, char *str, char **argv)
+static char	*process_input(char *line, t_shell *shell)
 {
-	char	*num;
-
-	str = getcwd(NULL, 0);
-	prompt.envp = mini_setenv("PWD", str, prompt.envp, 3);
-	free(str);
-	str = mini_getenv("SHLVL", prompt.envp, 5);
-	if (!str || ft_atoi(str) <= 0)
-		num = ft_strdup("1");
-	else
-		num = ft_itoa(ft_atoi(str) + 1);
-	free(str);
-	prompt.envp = mini_setenv("SHLVL", num, prompt.envp, 5);
-	free(num);
-	str = mini_getenv("PATH", prompt.envp, 4);
-	if (!str)
-		prompt.envp = mini_setenv("PATH", \
-		"/usr/local/sbin:/usr/local/bin:/usr/bin:/bin", prompt.envp, 4);
-	free(str);
-	str = mini_getenv("_", prompt.envp, 1);
-	if (!str)
-		prompt.envp = mini_setenv("_", argv[0], prompt.envp, 1);
-	free(str);
-	return (prompt);
+	(void)shell;
+	if (!line)
+		return (NULL);
+	return (ft_strdup(line));
 }
 
-static t_prompt	init_prompt(char **argv, char **envp)
+static void	handle_empty_line(void)
 {
-	t_prompt	prompt;
-	char		*str;
+	/* Do nothing for empty lines */
+}
 
-	str = NULL;
-	prompt.cmds = NULL;
-	prompt.envp = ft_dup_matrix(envp);
-	g_status = 0;
-	mini_getpid(&prompt);
-	prompt = init_vars(prompt, str, argv);
-	return (prompt);
+static int	is_only_spaces(char *line)
+{
+	int	i;
+
+	if (!line)
+		return (1);
+	i = 0;
+	while (line[i])
+	{
+		if (line[i] != ' ' && line[i] != '\t')
+			return (0);
+		i++;
+	}
+	return (1);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
-	char				*str;
-	char				*out;
-	t_prompt			prompt;
+	t_shell		shell;
+	char		*line;
+	char		*processed_line;
+	t_token		*tokens;
+	t_command	*commands;
 
-	prompt = init_prompt(argv, envp);
-	while (argv && argc)
+	(void)argc;
+	(void)argv;
+	init_shell(&shell, envp);
+	setup_signals();
+	while (1)
 	{
-		signal(SIGINT, handle_sigint);
-		signal(SIGQUIT, SIG_IGN);
-		str = mini_getprompt(prompt);
-		if (str)
-			out = readline(str);
-		else
-			out = readline("guest@minishell $ ");
-		free(str);
-		if (!check_args(out, &prompt))
+		line = readline(PROMPT);
+		if (!line)
+		{
+			if (isatty(STDIN_FILENO))
+				printf("exit\n");
 			break ;
+		}
+		if (g_signal_received == SIGINT)
+		{
+			shell.exit_status = 130;
+			g_signal_received = 0;
+		}
+		if (is_only_spaces(line))
+		{
+			handle_empty_line();
+			free(line);
+			continue ;
+		}
+		add_history(line);
+		processed_line = process_input(line, &shell);
+		free(line);
+		if (!processed_line)
+			continue ;
+		tokens = tokenize(processed_line);
+		free(processed_line);
+		if (!tokens)
+			continue ;
+		commands = parse_commands(tokens);
+		free_tokens(tokens);
+		if (!commands)
+			continue ;
+		shell.exit_status = execute_commands(commands, &shell);
+		free_commands(commands);
 	}
-	exit(g_status);
+	free_env(shell.env);
+	close(shell.stdin_backup);
+	close(shell.stdout_backup);
+	return (shell.exit_status);
 }
