@@ -6,7 +6,7 @@
 /*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:14:12 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 22:15:03 by weiyuandu        ###   ########.fr       */
+/*   Updated: 2026/02/13 12:51:48 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ static void	handle_empty_line(void)
 	/* Do nothing for empty lines */
 }
 
+//如果命令全是空格的话
 static int	is_only_spaces(char *line)
 {
 	int	i;

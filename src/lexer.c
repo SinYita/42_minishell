@@ -6,7 +6,7 @@
 /*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 22:35:32 by weiyuandu        ###   ########.fr       */
+/*   Updated: 2026/02/13 12:44:15 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,12 +38,12 @@ static void	add_token(t_token **tokens, t_token *new_token)
 		current = current->next;
 	current->next = new_token;
 }
-
+//可以放在utlis里面
 static int	is_special_char(char c)
 {
 	return (c == '|' || c == '<' || c == '>');
 }
-
+//utlis里面
 static int	is_whitespace(char c)
 {
 	return (c == ' ' || c == '\t' || c == '\n');

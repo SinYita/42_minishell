@@ -6,13 +6,19 @@
 /*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 23:18:03 by weiyuandu        ###   ########.fr       */
+/*   Updated: 2026/02/13 12:59:43 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 #include <errno.h>
 
+//用来实现heredoc
+
+// cat << EOF
+// hello world
+// this is a heredoc
+// EOF
 int	handle_heredoc(char *delimiter) {
   int pipe_fd[2];
   char *line;
@@ -50,6 +56,8 @@ int	handle_heredoc(char *delimiter) {
   }
 }
 
+
+//设置相应的重定向
 int	setup_redirections(t_redir *redir) {
   t_redir *current;
   char *filename;

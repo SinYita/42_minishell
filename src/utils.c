@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:34:17 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/13 12:41:36 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
+//这个可以使用libft中的ft_strncmp(const char * s1,const char *s2, size_t n)替换掉
 int	ft_strcmp(char *s1, char *s2)
 {
 	int	i;

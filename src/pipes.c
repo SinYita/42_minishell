@@ -3,15 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   pipes.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:36:09 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/13 12:57:51 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+//这个文件使用pipe进行命名不合适，查看一下实际的内容
+
 #include "minishell.h"
 
+//这里就是ft_split，用来将一维字符串分割为二维的数组
 char	**split_string(char *str, char delimiter)
 {
 	char	**result;
@@ -53,12 +56,13 @@ char	**split_string(char *str, char delimiter)
 	result[j] = NULL;
 	return (result);
 }
-
+//多此一举，可以进行删除
 char	*join_strings(char *s1, char *s2)
 {
 	return (ft_strjoin(s1, s2));
 }
-
+//用来去除字符串最外围的匹配引号
+//里面的\没有用，可以直接删除掉（没有要求）
 char	*trim_quotes(char *str)
 {
 	int		len;
@@ -77,7 +81,8 @@ char	*trim_quotes(char *str)
 	}
 	return (ft_strdup(str));
 }
-
+//这个部分太过度工程了，需要大量简化
+//不需要考虑\符号，此外里面的很多内容可以使用isalpha或者isnum进行简化
 char	*process_quotes_and_variables(char *str, t_shell *shell)
 {
 	char	*result;

@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   built_ins2.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:36:26 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/13 12:51:28 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 #include <limits.h>
 
+//用来输出错误信息
 static void	put_err_parts(const char *a, const char *b, const char *c)
 {
 	if (a)
@@ -23,6 +24,7 @@ static void	put_err_parts(const char *a, const char *b, const char *c)
 		ft_putstr_fd((char *)c, STDERR_FILENO);
 }
 
+//atoi，但是比atoi更严格的转换，确保str完全是数字才可以
 static int	parse_long_strict(const char *str, long *out)
 {
 	unsigned long long	res;
@@ -114,6 +116,15 @@ int	builtin_cd(char **args, t_shell *shell)
 	return (0);
 }
 
+//用来检测是否是合法的标志符
+// export MY_VAR=value      # MY_VAR ✓
+// export _private=secret   # _private ✓  
+// export ABC123=test       # ABC123 ✓
+// unset HOME               # HOME ✓
+// export 123VAR=value      # ❌ 数字开头
+// export MY-VAR=value      # ❌ 包含连字符
+// export MY VAR=value      # ❌ 包含空格
+// export @SPECIAL=value    # ❌ 特殊字符开头
 static int	is_valid_identifier(char *str)
 {
 	int	i;
@@ -134,7 +145,7 @@ static int	is_valid_identifier(char *str)
 	}
 	return (1);
 }
-
+//用来数envp中的env个数，可以使用listcount替换
 static int	count_env_vars(t_env *env)
 {
 	int		count;
@@ -149,7 +160,7 @@ static int	count_env_vars(t_env *env)
 	}
 	return (count);
 }
-
+//使用export的时候，必须按照字母顺序输出
 static void	sort_env_array(t_env **array, int count)
 {
 	int		i;
@@ -173,7 +184,8 @@ static void	sort_env_array(t_env **array, int count)
 		i++;
 	}
 }
-
+//输出格式 将envp进行排序然后格式化输出
+//可以使用list直接进行排序
 static void	print_export_format(t_shell *shell)
 {
 	t_env	*current;
@@ -193,7 +205,7 @@ static void	print_export_format(t_shell *shell)
 		current = current->next;
 		i++;
 	}
-	sort_env_array(env_array, count);
+	sort_env_array(env_array, count); //这部分多余了
 	i = 0;
 	while (i < count)
 	{

@@ -6,23 +6,24 @@
 /*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/13 00:34:29 by weiyuandu        ###   ########.fr       */
+/*   Updated: 2026/02/13 12:43:33 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 #include <sys/stat.h>
 
+//这个可以使用libft替换掉
 static int	is_alpha_char(char c)
 {
 	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
 }
-
+//可以使用libft替换掉
 static int	is_alnum_char(char c)
 {
 	return (is_alpha_char(c) || (c >= '0' && c <= '9'));
 }
-
+//用来寻找命令的执行路径，如果没有找到就返回NULL
 char	*find_command_path(char *cmd, t_shell *shell)
 {
 	char	*path_env;
@@ -33,20 +34,19 @@ char	*find_command_path(char *cmd, t_shell *shell)
 
 	if (!cmd)
 		return (NULL);
-	/* Don't check local files for commands without slash - only PATH lookup */
 	path_env = get_env_value(shell, "PATH");
 	if (!path_env)
 		return (NULL);
-	paths = split_string(path_env, ':');
+	paths = split_string(path_env, ':'); //按照：分割path变量
 	if (!paths)
 		return (NULL);
 	i = 0;
-	while (paths[i])
+	while (paths[i]) //逐个尝试
 	{
 		temp = ft_strjoin(paths[i], "/");
 		full_path = ft_strjoin(temp, cmd);
 		free(temp);
-		if (access(full_path, F_OK) == 0)
+		if (access(full_path, F_OK) == 0) //如果找到了，清理内存并返回完整的路径
 		{
 			i = 0;
 			while (paths[i])
@@ -57,13 +57,14 @@ char	*find_command_path(char *cmd, t_shell *shell)
 		free(full_path);
 		i++;
 	}
+	//内存清理部分
 	i = 0;
 	while (paths[i])
 		free(paths[i++]);
 	free(paths);
 	return (NULL);
 }
-
+//检查文件是否可以作为可执行程序运行
 static int	check_file_accessibility(char *path)
 {
 	struct stat	file_stat;
@@ -71,17 +72,18 @@ static int	check_file_accessibility(char *path)
 	if (stat(path, &file_stat) != 0)
 	{
 		if (errno == ENOENT)
-			return (127); /* No such file or directory */
+			return (127);
 		else
-			return (127); /* Other stat errors */
+			return (127);
 	}
-	if (S_ISDIR(file_stat.st_mode))
-		return (126); /* Is a directory */
-	if (access(path, X_OK) != 0)
-		return (126); /* Permission denied */
-	return (0);       /* Executable file */
+	if (S_ISDIR(file_stat.st_mode)) //检查是否是目录
+		return (126);
+	if (access(path, X_OK) != 0) //检查是否有权限
+		return (126);
+	return (0);      
 }
 
+//用来执行外部命令
 static int	execute_external_command(t_command *cmd, t_shell *shell)
 {
 	pid_t	pid;
@@ -94,11 +96,11 @@ static int	execute_external_command(t_command *cmd, t_shell *shell)
 	/* Handle empty command */
 	if (!cmd->args[0] || !cmd->args[0][0])
 		return (0);
-	/* Check if command contains a slash (absolute or relative path) */
+	//检查命令中是否包含了/，意味着存在绝对路径或者相对路径
 	if (ft_strchr(cmd->args[0], '/'))
 	{
 		error_type = check_file_accessibility(cmd->args[0]);
-		if (error_type == 126)
+		if (error_type == 126) //权限拒绝或者尝试执行目录
 		{
 			if (stat(cmd->args[0], &file_stat) == 0
 				&& S_ISDIR(file_stat.st_mode))
@@ -115,7 +117,7 @@ static int	execute_external_command(t_command *cmd, t_shell *shell)
 			}
 			return (126);
 		}
-		else if (error_type == 127)
+		else if (error_type == 127) //文件不存在或者没有找到命令
 		{
 			ft_putstr_fd("minishell: ", STDERR_FILENO);
 			ft_putstr_fd(cmd->args[0], STDERR_FILENO);
@@ -124,7 +126,7 @@ static int	execute_external_command(t_command *cmd, t_shell *shell)
 		}
 		cmd_path = ft_strdup(cmd->args[0]);
 	}
-	else
+	else //如果不存在的话，就在path里面找有没有对应的命令
 	{
 		cmd_path = find_command_path(cmd->args[0], shell);
 		if (!cmd_path)
@@ -136,14 +138,14 @@ static int	execute_external_command(t_command *cmd, t_shell *shell)
 		}
 	}
 	pid = fork();
-	if (pid == 0)
+	if (pid == 0) //如果是子进程
 	{
-		envp = env_to_array(shell);
-		execve(cmd_path, cmd->args, envp);
+		envp = env_to_array(shell); //转换回envp二维数组
+		execve(cmd_path, cmd->args, envp); //执行对应的命令
 		perror("execve");
 		exit(127);
 	}
-	else if (pid > 0)
+	else if (pid > 0) //如果是父进程
 	{
 		waitpid(pid, &status, 0);
 		free(cmd_path);
@@ -258,6 +260,7 @@ static int	execute_command_no_redirections(t_command *cmd, t_shell *shell)
 		return (0);
 	}
 	/* Temporarily replace args for execution */
+	//这个临时替换的部分不是很有必要，考虑删除掉
 	original_args = cmd->args;
 	cmd->args = expanded_args;
 	if (is_builtin(cmd->args[0]))
@@ -272,7 +275,7 @@ static int	execute_command_no_redirections(t_command *cmd, t_shell *shell)
 	free(expanded_args);
 	return (exit_status);
 }
-
+//搞清楚区别，看一下是否需要合并或者替换掉
 int	execute_command(t_command *cmd, t_shell *shell)
 {
 	int		exit_status;
