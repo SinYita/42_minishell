@@ -3,15 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   env_utils.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:36:22 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/12 21:41:06 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+
+//将二维的envp转换为链表结构，方便后续的删除和增加
 t_env	*init_env(char **envp)
 {
 	t_env	*env;
@@ -50,6 +52,7 @@ t_env	*init_env(char **envp)
 	return (env);
 }
 
+//便利整个链表，用来查询环境变量key的值
 char	*get_env_value(t_shell *shell, char *key)
 {
 	t_env	*current;
@@ -57,6 +60,7 @@ char	*get_env_value(t_shell *shell, char *key)
 
 	if (!key)
 		return (NULL);
+	//查询上一个命令的退出状态码 对应 echo $?
 	if (ft_strcmp(key, "?") == 0)
 	{
 		status = ft_itoa(shell->exit_status);
@@ -71,7 +75,7 @@ char	*get_env_value(t_shell *shell, char *key)
 	}
 	return (NULL);
 }
-
+//重新设置变量key的值为value
 void	set_env_value(t_shell *shell, char *key, char *value)
 {
 	t_env	*current;
@@ -94,7 +98,7 @@ void	set_env_value(t_shell *shell, char *key, char *value)
 	new_node->next = shell->env;
 	shell->env = new_node;
 }
-
+//删除对应的key值
 void	unset_env_value(t_shell *shell, char *key)
 {
 	t_env	*current;
@@ -119,7 +123,7 @@ void	unset_env_value(t_shell *shell, char *key)
 		current = current->next;
 	}
 }
-
+//将envp重新转换为二维数组 方便后续输出，对应的是命令env
 char	**env_to_array(t_shell *shell)
 {
 	t_env	*current;
@@ -153,7 +157,7 @@ char	**env_to_array(t_shell *shell)
 	envp[i] = NULL;
 	return (envp);
 }
-
+//删除envp的所有节点
 void	free_env(t_env *env)
 {
 	t_env	*current;

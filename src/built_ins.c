@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   built_ins.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:49:51 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/13 00:49:57 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,19 +16,19 @@ int	is_builtin(char *cmd)
 {
 	if (!cmd)
 		return (0);
-	if (ft_strcmp(cmd, "echo") == 0)
+	if (ft_strncmp(cmd, "echo",ft_strlen("echo")) == 0)
 		return (1);
-	if (ft_strcmp(cmd, "cd") == 0)
+	if (ft_strncmp(cmd, "cd",ft_strlen("cd")) == 0)
 		return (1);
-	if (ft_strcmp(cmd, "pwd") == 0)
+	if (ft_strncmp(cmd, "pwd",ft_strlen("pwd")) == 0)
 		return (1);
-	if (ft_strcmp(cmd, "export") == 0)
+	if (ft_strncmp(cmd, "export",ft_strlen("export")) == 0)
 		return (1);
-	if (ft_strcmp(cmd, "unset") == 0)
+	if (ft_strncmp(cmd, "unset",ft_strlen("unset")) == 0)
 		return (1);
-	if (ft_strcmp(cmd, "env") == 0)
+	if (ft_strncmp(cmd, "env",ft_strlen("env")) == 0)
 		return (1);
-	if (ft_strcmp(cmd, "exit") == 0)
+	if (ft_strncmp(cmd, "exit",ft_strlne("exit")) == 0)
 		return (1);
 	return (0);
 }

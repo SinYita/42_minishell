@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:24:07 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:36:16 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/12 22:36:24 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,6 @@ typedef enum e_token_type
 {
 	TOKEN_WORD,
 	TOKEN_PIPE,
-	TOKEN_SEMICOLON,
 	TOKEN_REDIR_IN,
 	TOKEN_REDIR_OUT,
 	TOKEN_REDIR_APPEND,
@@ -84,7 +83,6 @@ typedef struct s_shell
 	int					stdout_backup;
 }						t_shell;
 
-/* Parsing functions */
 t_token					*tokenize(char *line);
 t_command				*parse_commands(t_token *tokens);
 void					free_tokens(t_token *tokens);

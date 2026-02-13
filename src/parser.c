@@ -3,15 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:36:14 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/12 23:17:32 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+//同样是链表结构，创建一个新的node
 static t_command	*create_command(void)
 {
 	t_command	*cmd;
@@ -23,7 +24,7 @@ static t_command	*create_command(void)
 	cmd->next = NULL;
 	return (cmd);
 }
-
+//创建一个重定向节点
 static t_redir	*create_redirection(int type, char *file)
 {
 	t_redir	*redir;
@@ -35,7 +36,7 @@ static t_redir	*create_redirection(int type, char *file)
 	redir->next = NULL;
 	return (redir);
 }
-
+//将一个重定向节点连接到指定命令的重定向链表尾部
 static void	add_redirection(t_command *cmd, t_redir *redir)
 {
 	t_redir	*current;
@@ -50,28 +51,33 @@ static void	add_redirection(t_command *cmd, t_redir *redir)
 		current = current->next;
 	current->next = redir;
 }
-
+//这里可以考虑使用栈空间存储参数
 static void	add_arg_to_command(t_command *cmd, char *arg)
 {
 	char	**new_args;
 	int		count;
 	int		i;
 
+	//计算当前的参数数量
 	count = 0;
 	if (cmd->args)
 	{
 		while (cmd->args[count])
 			count++;
 	}
+	//分配更大的参数空间
 	new_args = ft_malloc(sizeof(char *) * (count + 2));
 	i = 0;
+	//复制所有的参数进去
 	while (i < count)
 	{
 		new_args[i] = cmd->args[i];
 		i++;
 	}
+	//复制新参数进去
 	new_args[count] = ft_strdup(arg);
 	new_args[count + 1] = NULL;
+	//更新command的参数
 	free(cmd->args);
 	cmd->args = new_args;
 }
@@ -83,8 +89,7 @@ static t_command	*parse_single_command(t_token **tokens)
 	int			redir_type;
 
 	cmd = create_command();
-	while (*tokens && (*tokens)->type != TOKEN_PIPE
-		&& (*tokens)->type != TOKEN_SEMICOLON)
+	while (*tokens && (*tokens)->type != TOKEN_PIPE)
 	{
 		if ((*tokens)->type == TOKEN_WORD)
 		{
@@ -94,22 +99,22 @@ static t_command	*parse_single_command(t_token **tokens)
 		else if ((*tokens)->type >= TOKEN_REDIR_IN
 			&& (*tokens)->type <= TOKEN_REDIR_HEREDOC)
 		{
-			redir_type = (*tokens)->type;
-			*tokens = (*tokens)->next;
-			if (*tokens && (*tokens)->type == TOKEN_WORD)
+			redir_type = (*tokens)->type; //记录重定向的类型
+			*tokens = (*tokens)->next; //移动到下一个token
+			if (*tokens && (*tokens)->type == TOKEN_WORD) //成功找到文件名
 			{
 				redir = create_redirection(redir_type, (*tokens)->value);
 				add_redirection(cmd, redir);
 				*tokens = (*tokens)->next;
 			}
-			else
+			else //没有找到文件名
 			{
 				printf("minishell: syntax error near unexpected token\n");
 				free_commands(cmd);
 				return (NULL);
 			}
 		}
-		else
+		else //这里存疑？？需不需要保留
 			*tokens = (*tokens)->next;
 	}
 	return (cmd);
@@ -126,21 +131,20 @@ t_command	*parse_commands(t_token *tokens)
 	current = NULL;
 	while (tokens)
 	{
-		cmd = parse_single_command(&tokens);
-		if (!cmd)
+		cmd = parse_single_command(&tokens); //会停留在管道符或者EOF
+		if (!cmd) //如果解析失败就清理所有的commands
 		{
 			free_commands(commands);
 			return (NULL);
 		}
-		if (tokens && (tokens->type == TOKEN_PIPE
-				|| tokens->type == TOKEN_SEMICOLON))
+		if (tokens && tokens->type == TOKEN_PIPE)//如果停留在管道符的话
 		{
-			separator_type = tokens->type;
+			separator_type = tokens->type; //用来指示执行器
 			tokens = tokens->next;
 		}
 		else
-			separator_type = TOKEN_EOF;
-		cmd->separator = separator_type;
+			separator_type = TOKEN_EOF; //告诉执行器后面没有管道了
+		cmd->separator = separator_type; //执行器看cmd的指示器来执行命令
 		if (!commands)
 		{
 			commands = cmd;
@@ -155,6 +159,7 @@ t_command	*parse_commands(t_token *tokens)
 	return (commands);
 }
 
+//释放所有command节点
 void	free_commands(t_command *commands)
 {
 	t_command	*current;

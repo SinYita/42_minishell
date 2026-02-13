@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   executor.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: wedu <wedu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: weiyuandu <weiyuandu@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 15:30:00 by wedu              #+#    #+#             */
-/*   Updated: 2026/02/12 17:36:21 by wedu             ###   ########.fr       */
+/*   Updated: 2026/02/13 00:34:29 by weiyuandu        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,6 +161,7 @@ static int	execute_external_command(t_command *cmd, t_shell *shell)
 	return (0);
 }
 
+//是变量赋值
 static int	is_variable_assignment(char *arg)
 {
 	int	i;
@@ -180,7 +181,7 @@ static int	is_variable_assignment(char *arg)
 	}
 	return (arg[i] == '=');
 }
-
+//执行变量赋值
 static int	execute_variable_assignment(char *assignment, t_shell *shell)
 {
 	char	*equals;
@@ -208,13 +209,12 @@ static int	execute_command_no_redirections(t_command *cmd, t_shell *shell)
 
 	if (!cmd || !cmd->args)
 		return (0);
-	/* Check if first argument is empty or null */
 	if (!cmd->args[0] || !cmd->args[0][0])
 		return (0);
-	/* Check if it's a variable assignment without command */
+	//处理VAR = value
 	if (cmd->args[0] && is_variable_assignment(cmd->args[0]) && !cmd->args[1])
 		return (execute_variable_assignment(cmd->args[0], shell));
-	/* Expand variables in arguments */
+	//进行变量展开
 	i = 0;
 	while (cmd->args[i])
 		i++;
@@ -226,7 +226,7 @@ static int	execute_command_no_redirections(t_command *cmd, t_shell *shell)
 		i++;
 	}
 	expanded_args[i] = NULL;
-	/* Remove empty arguments and shift remaining ones */
+	//移除所有的空变量
 	j = 0;
 	i = 0;
 	while (expanded_args[i])
@@ -358,6 +358,7 @@ int	execute_command(t_command *cmd, t_shell *shell)
 	return (exit_status);
 }
 
+//处理管道然后执行对应的命令
 int	execute_commands(t_command *commands, t_shell *shell)
 {
 	t_command	*current;
@@ -376,7 +377,7 @@ int	execute_commands(t_command *commands, t_shell *shell)
 		while (pipeline_end && pipeline_end->separator == TOKEN_PIPE)
 			pipeline_end = pipeline_end->next;
 		/* Execute this pipeline or single command */
-		if (pipeline_start == pipeline_end)
+		if (pipeline_start == pipeline_end) //如果是单个命令，就直接执行
 		{
 			/* Single command - execute directly */
 			exit_status = execute_command(current, shell);
@@ -397,6 +398,7 @@ int	execute_commands(t_command *commands, t_shell *shell)
 	return (exit_status);
 }
 
+//执行对应的管道
 int	execute_pipeline(t_command *commands, t_shell *shell)
 {
 	t_command	*current;
@@ -414,57 +416,59 @@ int	execute_pipeline(t_command *commands, t_shell *shell)
 		return (execute_command(commands, shell));
 	/* Count commands */
 	cmd_count = 0;
-	current = commands;
+	current = commands; //统计命令总数
 	while (current)
 	{
 		cmd_count++;
 		current = current->next;
 	}
-	pids = ft_malloc(sizeof(pid_t) * cmd_count);
+	pids = ft_malloc(sizeof(pid_t) * cmd_count);//需要分配对应数量的进程
 	prev_fd = -1;
 	last_exit_status = 0;
 	current = commands;
 	i = 0;
 	while (current)
 	{
-		if (current->next && pipe(pipe_fd) == -1)
+		if (current->next && pipe(pipe_fd) == -1) //只有非最后一个命令才创建管道
 		{
 			perror("pipe");
 			free(pids);
 			return (1);
 		}
-		pids[i] = fork();
-		if (pids[i] == 0)
+		pids[i] = fork(); 
+		if (pids[i] == 0) //当前是子进程
 		{
+			//设置输入重定向
 			if (prev_fd != -1)
 			{
 				dup2(prev_fd, STDIN_FILENO);
 				close(prev_fd);
 			}
+			//设置输出重定向
 			if (current->next)
 			{
 				dup2(pipe_fd[1], STDOUT_FILENO);
 				close(pipe_fd[1]);
 				close(pipe_fd[0]);
 			}
-			/* Apply redirections in child process */
+			//处理本身的重定向
 			if (current->redirections
 				&& setup_redirections(current->redirections) != 0)
 			{
 				free(pids);
 				exit(1);
 			}
-			free(pids);
-			exit(execute_command_no_redirections(current, shell));
+			free(pids);//子进程不需要这个数组
+			exit(execute_command_no_redirections(current, shell)); //这部分什么意思？
 		}
-		else if (pids[i] > 0)
+		else if (pids[i] > 0)//父进程
 		{
 			if (prev_fd != -1)
-				close(prev_fd);
+				close(prev_fd); //关闭上一个管道的读端
 			if (current->next)
 			{
-				close(pipe_fd[1]);
-				prev_fd = pipe_fd[0];
+				close(pipe_fd[1]); //关闭写端口
+				prev_fd = pipe_fd[0]; //保存读端口给下一个命令
 			}
 		}
 		else
@@ -481,7 +485,7 @@ int	execute_pipeline(t_command *commands, t_shell *shell)
 	while (i < cmd_count)
 	{
 		waitpid(pids[i], &status, 0);
-		if (i == cmd_count - 1)
+		if (i == cmd_count - 1) //如果是最后一个进程，捕获它的退出状态
 		{
 			if (WIFEXITED(status))
 				last_exit_status = WEXITSTATUS(status);
